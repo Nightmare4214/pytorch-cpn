@@ -1,10 +1,12 @@
-from .resnet import *
 import torch.nn as nn
 import torch
-from .globalNet import globalNet
-from .refineNet import refineNet
+from networks.globalNet import globalNet
+from networks.refineNet import refineNet
 
 __all__ = ['CPN50', 'CPN101']
+
+from networks.resnet import resnet101, resnet50
+
 
 class CPN(nn.Module):
     def __init__(self, resnet, output_shape, num_class, pretrained=True):
@@ -21,12 +23,23 @@ class CPN(nn.Module):
 
         return global_outs, refine_out
 
-def CPN50(out_size,num_class,pretrained=True):
+
+def CPN50(out_size, num_class, pretrained=True):
     res50 = resnet50(pretrained=pretrained)
-    model = CPN(res50, output_shape=out_size,num_class=num_class, pretrained=pretrained)
+    model = CPN(res50, output_shape=out_size, num_class=num_class, pretrained=pretrained)
     return model
 
-def CPN101(out_size,num_class,pretrained=True):
+
+def CPN101(out_size, num_class, pretrained=True):
     res101 = resnet101(pretrained=pretrained)
-    model = CPN(res101, output_shape=out_size,num_class=num_class, pretrained=pretrained)
+    model = CPN(res101, output_shape=out_size, num_class=num_class, pretrained=pretrained)
     return model
+
+
+if __name__ == '__main__':
+    data_shape = (256, 192)
+    output_shape = (64, 48)
+    num_class = 17
+    model = CPN50(out_size=output_shape, num_class=num_class, pretrained=False)
+    x = torch.randn((1, 3, *data_shape))
+    print(model(x))

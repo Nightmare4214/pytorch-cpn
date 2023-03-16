@@ -2,6 +2,7 @@ import torch.nn as nn
 import torch
 import math
 
+
 class globalNet(nn.Module):
     def __init__(self, channel_settings, output_shape, num_class):
         super(globalNet, self).__init__()
@@ -27,38 +28,37 @@ class globalNet(nn.Module):
                 m.bias.data.zero_()
 
     def _lateral(self, input_size):
-        layers = []
-        layers.append(nn.Conv2d(input_size, 256,
-            kernel_size=1, stride=1, bias=False))
-        layers.append(nn.BatchNorm2d(256))
-        layers.append(nn.ReLU(inplace=True))
+        layers = [
+            nn.Conv2d(input_size, 256, kernel_size=1, stride=1, bias=False),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True)
+        ]
 
         return nn.Sequential(*layers)
 
     def _upsample(self):
-        layers = []
-        layers.append(torch.nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True))
-        layers.append(torch.nn.Conv2d(256, 256,
-            kernel_size=1, stride=1, bias=False))
-        layers.append(nn.BatchNorm2d(256))
+        layers = [
+            torch.nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True),
+            torch.nn.Conv2d(256, 256, kernel_size=1, stride=1, bias=False),
+            nn.BatchNorm2d(256)
+        ]
 
         return nn.Sequential(*layers)
 
     def _predict(self, output_shape, num_class):
-        layers = []
-        layers.append(nn.Conv2d(256, 256,
-            kernel_size=1, stride=1, bias=False))
-        layers.append(nn.BatchNorm2d(256))
-        layers.append(nn.ReLU(inplace=True))
+        layers = [
+            nn.Conv2d(256, 256, kernel_size=1, stride=1, bias=False),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True),
 
-        layers.append(nn.Conv2d(256, num_class,
-            kernel_size=3, stride=1, padding=1, bias=False))
-        layers.append(nn.Upsample(size=output_shape, mode='bilinear', align_corners=True))
-        layers.append(nn.BatchNorm2d(num_class))
+            nn.Conv2d(256, num_class, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.Upsample(size=output_shape, mode='bilinear', align_corners=True),
+            nn.BatchNorm2d(num_class)
+        ]
 
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+    def forward(self, x):  # [(B, 2048, 8, 6), (B, 1024, 16, 12),(B, 512, 32, 24), (B, 256, 64, 48)]
         global_fms, global_outs = [], []
         for i in range(len(self.channel_settings)):
             if i == 0:
@@ -70,5 +70,6 @@ class globalNet(nn.Module):
                 up = self.upsamples[i](feature)
             feature = self.predict[i](feature)
             global_outs.append(feature)
-
+        # [(B, 256, 8, 6), (B, 256, 16, 12), (B, 256, 32, 24), (B, 256, 64, 48)]
+        # [(B, 17, 64, 48), (B, 17, 64, 48), (B, 17, 64, 48), (B, 17, 64, 48)]
         return global_fms, global_outs

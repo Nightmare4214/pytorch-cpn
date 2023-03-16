@@ -1,10 +1,30 @@
 import os
+import random
 import shutil
-import torch 
-import math
+
 import numpy as np
 import scipy.io
-import matplotlib.pyplot as plt
+import torch
+
+
+def setup_seed(seed):
+    """
+    set random seed
+
+    :param seed: seed num
+    """
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":16:8"  # LSTM(cuda>10.2)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)  # if you are using multi-GPU.
+    torch.use_deterministic_algorithms(True, warn_only=True)
+    # torch.backends.cudnn.enabled = False
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True
+
 
 def to_numpy(tensor):
     if torch.is_tensor(tensor):
@@ -28,31 +48,34 @@ def save_checkpoint(state, preds, is_best, checkpoint='checkpoint', filename='ch
     preds = to_numpy(preds)
     filepath = os.path.join(checkpoint, filename)
     torch.save(state, filepath)
-    scipy.io.savemat(os.path.join(checkpoint, 'preds.mat'), mdict={'preds' : preds})
+    scipy.io.savemat(os.path.join(checkpoint, 'preds.mat'), mdict={'preds': preds})
 
     if snapshot and state.epoch % snapshot == 0:
         shutil.copyfile(filepath, os.path.join(checkpoint, 'checkpoint_{}.pth.tar'.format(state.epoch)))
 
     if is_best:
         shutil.copyfile(filepath, os.path.join(checkpoint, 'model_best.pth.tar'))
-        scipy.io.savemat(os.path.join(checkpoint, 'preds_best.mat'), mdict={'preds' : preds})
+        scipy.io.savemat(os.path.join(checkpoint, 'preds_best.mat'), mdict={'preds': preds})
 
-def copy_log(filepath = 'checkpoint'):
+
+def copy_log(filepath='checkpoint'):
     filepath = os.path.join(filepath, 'log.txt')
     shutil.copyfile(filepath, os.path.join('log_backup.txt'))
 
+
 def save_model(state, checkpoint='checkpoint', filename='checkpoint.pth.tar'):
-    filename = 'epoch'+str(state['epoch']) + filename
+    filename = 'epoch' + str(state['epoch']) + filename
     filepath = os.path.join(checkpoint, filename)
     torch.save(state, filepath)
 
     # if snapshot and state.epoch % snapshot == 0:
     #     shutil.copyfile(filepath, os.path.join(checkpoint, 'checkpoint_{}.pth.tar'.format(state.epoch)))
 
+
 def save_pred(preds, checkpoint='checkpoint', filename='preds_valid.mat'):
     preds = to_numpy(preds)
     filepath = os.path.join(checkpoint, filename)
-    scipy.io.savemat(filepath, mdict={'preds' : preds})
+    scipy.io.savemat(filepath, mdict={'preds': preds})
 
 
 def adjust_learning_rate(optimizer, epoch, schedule, gamma):

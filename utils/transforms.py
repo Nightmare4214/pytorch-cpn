@@ -1,11 +1,9 @@
-import os
 import numpy as np
 import scipy.misc
-import matplotlib.pyplot as plt
 import torch
 
-from .misc import *
-from .imutils import *
+from utils.imutils import im_to_numpy, im_to_torch
+from utils.misc import to_torch
 
 
 def color_normalize(x, mean):
@@ -21,10 +19,10 @@ def flip_back(flip_output, dataset='mpii'):
     """
     flip output map
     """
-    if dataset ==  'mpii':
+    if dataset == 'mpii':
         matchedParts = (
-            [0,5],   [1,4],   [2,3],
-            [10,15], [11,14], [12,13]
+            [0, 5], [1, 4], [2, 3],
+            [10, 15], [11, 14], [12, 13]
         )
     else:
         print('Not supported dataset: ' + dataset)
@@ -45,10 +43,10 @@ def shufflelr(x, width, dataset='mpii'):
     """
     flip coords
     """
-    if dataset ==  'mpii':
+    if dataset == 'mpii':
         matchedParts = (
-            [0,5],   [1,4],   [2,3],
-            [10,15], [11,14], [12,13]
+            [0, 5], [1, 4], [2, 3],
+            [10, 15], [11, 14], [12, 13]
         )
     else:
         print('Not supported dataset: ' + dataset)
@@ -87,20 +85,20 @@ def get_transform(center, scale, res, rot=0):
     t[1, 2] = res[0] * (-float(center[1]) / h + .5)
     t[2, 2] = 1
     if not rot == 0:
-        rot = -rot # To match direction of rotation from cropping
-        rot_mat = np.zeros((3,3))
+        rot = -rot  # To match direction of rotation from cropping
+        rot_mat = np.zeros((3, 3))
         rot_rad = rot * np.pi / 180
-        sn,cs = np.sin(rot_rad), np.cos(rot_rad)
-        rot_mat[0,:2] = [cs, -sn]
-        rot_mat[1,:2] = [sn, cs]
-        rot_mat[2,2] = 1
+        sn, cs = np.sin(rot_rad), np.cos(rot_rad)
+        rot_mat[0, :2] = [cs, -sn]
+        rot_mat[1, :2] = [sn, cs]
+        rot_mat[2, 2] = 1
         # Need to rotate around center
         t_mat = np.eye(3)
-        t_mat[0,2] = -res[1]/2
-        t_mat[1,2] = -res[0]/2
+        t_mat[0, 2] = -res[1] / 2
+        t_mat[1, 2] = -res[0] / 2
         t_inv = t_mat.copy()
-        t_inv[:2,2] *= -1
-        t = np.dot(t_inv,np.dot(rot_mat,np.dot(t_mat,t)))
+        t_inv[:2, 2] *= -1
+        t = np.dot(t_inv, np.dot(rot_mat, np.dot(t_mat, t)))
     return t
 
 
@@ -137,7 +135,7 @@ def crop(img, center, scale, res, rot=0):
         new_wd = int(np.math.floor(wd / sf))
         if new_size < 2:
             return torch.zeros(res[0], res[1], img.shape[2]) \
-                        if len(img.shape) > 2 else torch.zeros(res[0], res[1])
+                if len(img.shape) > 2 else torch.zeros(res[0], res[1])
         else:
             img = scipy.misc.imresize(img, [new_ht, new_wd])
             center = center * 1.0 / sf

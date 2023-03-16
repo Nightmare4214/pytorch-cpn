@@ -1,11 +1,10 @@
+import torch
 import torch.nn as nn
 import math
 import torch.utils.model_zoo as model_zoo
 
-
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
            'resnet152']
-
 
 model_urls = {
     'resnet18': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
@@ -17,7 +16,7 @@ model_urls = {
 
 
 def conv3x3(in_planes, out_planes, stride=1):
-    "3x3 convolution with padding"
+    """3x3 convolution with padding"""
     return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
                      padding=1, bias=False)
 
@@ -67,7 +66,7 @@ class Bottleneck(nn.Module):
         self.conv3 = nn.Conv2d(planes, planes * 4, kernel_size=1, bias=False)
         self.bn3 = nn.BatchNorm2d(planes * 4)
         self.relu = nn.ReLU(inplace=True)
-        self.downsample = downsample 
+        self.downsample = downsample
         self.stride = stride
 
     def forward(self, x):
@@ -133,16 +132,16 @@ class ResNet(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x):
-        x = self.conv1(x)
+    def forward(self, x):  # (B, 3, 256, 192)
+        x = self.conv1(x)  # (B, 64, 128, 96)
         x = self.bn1(x)
         x = self.relu(x)
-        x = self.maxpool(x)
+        x = self.maxpool(x)  # (B, 64, 64, 48)
 
-        x1 = self.layer1(x)
-        x2 = self.layer2(x1)
-        x3 = self.layer3(x2)
-        x4 = self.layer4(x3)
+        x1 = self.layer1(x)  # (B, 256, 64, 48)
+        x2 = self.layer2(x1)  # (B, 512, 32, 24)
+        x3 = self.layer3(x2)  # (B, 1024, 16, 12)
+        x4 = self.layer4(x3)  # (B, 2048, 8, 6)
 
         return [x4, x3, x2, x1]
 
@@ -198,7 +197,7 @@ def resnet50(pretrained=False, **kwargs):
             if k not in state_dict:
                 continue
             state_dict[k] = v
-        print('successfully load '+str(len(state_dict.keys()))+' keys')
+        print('successfully load ' + str(len(state_dict.keys())) + ' keys')
         model.load_state_dict(state_dict)
     return model
 
@@ -218,7 +217,7 @@ def resnet101(pretrained=False, **kwargs):
             if k not in state_dict:
                 continue
             state_dict[k] = v
-        print('successfully load '+str(len(state_dict.keys()))+' keys')
+        print('successfully load ' + str(len(state_dict.keys())) + ' keys')
         model.load_state_dict(state_dict)
     return model
 
@@ -239,3 +238,9 @@ def resnet152(pretrained=False, **kwargs):
             state_dict[k] = v
         model.load_state_dict(state_dict)
     return model
+
+
+if __name__ == '__main__':
+    model = resnet18()
+    x = torch.randn((1, 3, 256, 256))
+    print(model(x))
