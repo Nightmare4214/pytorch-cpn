@@ -39,17 +39,19 @@ def trans_anno(ori_file, target_file, is_val):
                 bbox = ann['bbox']
                 num_keypoints = ann['num_keypoints']
                 file_name = img['file_name']
-                unit = {}
-                unit['num_keypoints'] = num_keypoints
-                unit['keypoints'] = keypoints
+                unit = {
+                    'num_keypoints': num_keypoints,
+                    'keypoints': keypoints
+                }
                 x1, y1, width, height = bbox
                 x2 = x1 + width
                 y2 = y1 + height
                 unit['GT_bbox'] = [int(x1), int(y1), int(x2), int(y2)]
                 single_data['unit'] = unit
-                imgInfo = {}
-                imgInfo['imgID'] = img_id
-                imgInfo['img_paths'] = file_name
+                imgInfo = {
+                    'imgID': img_id,
+                    'img_paths': file_name
+                }
                 single_data['imgInfo'] = imgInfo
                 if not is_val:
                     for i in range(4):

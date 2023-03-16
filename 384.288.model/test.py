@@ -39,7 +39,7 @@ def main(args):
 
     print('testing...')
     full_result = []
-    for i, (inputs, meta) in tqdm(enumerate(test_loader)):
+    for _, (inputs, meta) in tqdm(enumerate(test_loader), total=len(test_loader)):
         with torch.no_grad():
             input_var = inputs.cuda()
             if args.flip:

@@ -18,7 +18,7 @@ from utils.osutils import mkdir_p, isfile, isdir, join
 
 def seed_worker(worker_id):
     worker_seed = torch.initial_seed() % 2 ** 32
-    # print(worker_id, torch.initial_seed(), worker_seed)
+
     np.random.seed(worker_seed)
     random.seed(worker_seed)
 
@@ -114,7 +114,7 @@ def train(train_loader, model, criterions, optimizer):
     for i, (inputs, targets, valid, meta) in enumerate(train_loader):
         input_var = inputs.cuda()
 
-        target15, target11, target9, target7 = targets
+        _, _, _, target7 = targets
         refine_target_var = target7.cuda()
         valid_var = valid.cuda()
 
@@ -131,16 +131,16 @@ def train(train_loader, model, criterions, optimizer):
             global_label = label * (valid > 1.1).type(torch.FloatTensor).view(-1, num_points, 1, 1)
             global_loss = criterion1(global_output, global_label.cuda()) / 2.0
             loss += global_loss
-            global_loss_record += global_loss.data.item()
+            global_loss_record += global_loss.item()
         refine_loss = criterion2(refine_output, refine_target_var)
         refine_loss = refine_loss.mean(dim=3).mean(dim=2)
         refine_loss *= (valid_var > 0.1).type(torch.cuda.FloatTensor)
         refine_loss = ohkm(refine_loss, 8)
         loss += refine_loss
-        refine_loss_record = refine_loss.data.item()
+        refine_loss_record = refine_loss.item()
 
         # record loss
-        losses.update(loss.data.item(), inputs.size(0))
+        losses.update(loss.item(), inputs.size(0))
 
         # compute gradient and do Optimization step
         optimizer.zero_grad()
@@ -149,7 +149,7 @@ def train(train_loader, model, criterions, optimizer):
 
         if i % 100 == 0 and i != 0:
             print('iteration {} / {} | loss: {}, global loss: {}, refine loss: {}, avg loss: {}'
-                  .format(i, total_len, loss.data.item(), global_loss_record,
+                  .format(i, total_len, loss.item(), global_loss_record,
                           refine_loss_record, losses.avg))
 
     return losses.avg

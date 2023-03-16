@@ -154,8 +154,6 @@ class MscocoMulti(data.Dataset):
         gt_bbox = a['unit']['GT_bbox']
         image = cv2.cvtColor(cv2.imread(img_path), cv2.COLOR_BGR2RGB)
         # image = scipy.misc.imread(img_path, mode='RGB')
-        if image.ndim == 2:
-            print(image_name)
         if self.is_train:
             image, points, details = self.augmentationCropImage(image, gt_bbox, points)
         else:
